@@ -2,7 +2,7 @@ package com.example.discordcloneserver.web.controller;
 
 import com.example.discordcloneserver.domain.dto.User;
 import com.example.discordcloneserver.domain.service.UserService;
-import com.example.discordcloneserver.web.vo.LoginRequestBody;
+import com.example.discordcloneserver.web.requestbody.LoginRequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

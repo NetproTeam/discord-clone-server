@@ -1,4 +1,4 @@
-package com.example.discordcloneserver.web.vo;
+package com.example.discordcloneserver.web.requestbody;
 
 public record LoginRequestBody(
     String name
