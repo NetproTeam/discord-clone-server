@@ -63,4 +63,8 @@ public class ChannelDataManager {
 
     return channel;
   }
+
+  public boolean existsChannel(long id) {
+    return channelList.stream().anyMatch(channel -> channel.id() == id);
+  }
 }
