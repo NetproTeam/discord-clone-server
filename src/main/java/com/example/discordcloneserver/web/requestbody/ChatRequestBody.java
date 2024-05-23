@@ -2,11 +2,10 @@ package com.example.discordcloneserver.web.requestbody;
 
 public record ChatRequestBody(
     String senderUniqueName,
-    String content,
-    Long roomId
+    String content
 ){
-    public static ChatRequestBody init(String senderUniqueName, String content, Long roomId) {
-        return new ChatRequestBody(senderUniqueName, content, roomId);
+    public static ChatRequestBody init(String senderUniqueName, String content) {
+        return new ChatRequestBody(senderUniqueName, content);
     }
 
     @Override
@@ -14,7 +13,6 @@ public record ChatRequestBody(
         return "ChatRequestBody{" +
             "sender=" + senderUniqueName +
             ", content='" + content + '\'' +
-            ", roomId='" + roomId + '\'' +
             '}';
     }
 }
