@@ -3,20 +3,20 @@ package com.example.discordcloneserver.data.generator;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IdGenerator {
+public class UserIdGenerator {
 
-  private static IdGenerator instance;
+  private static UserIdGenerator instance;
 
-  public static IdGenerator getInstance() {
+  public static UserIdGenerator getInstance() {
     if (instance == null) {
-      instance = new IdGenerator();
+      instance = new UserIdGenerator();
     }
     return instance;
   }
 
   private final Map<String, Integer> idMap;
 
-  private IdGenerator() {
+  private UserIdGenerator() {
     idMap = new HashMap<>();
   }
 

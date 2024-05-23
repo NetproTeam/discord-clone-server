@@ -1,6 +1,6 @@
 package com.example.discordcloneserver.data;
 
-import com.example.discordcloneserver.data.generator.IdGenerator;
+import com.example.discordcloneserver.data.generator.UserIdGenerator;
 import com.example.discordcloneserver.domain.dto.User;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +24,8 @@ public class UserDataManager {
   private final List<User> userList;
 
   public User addUser(String name) {
-    IdGenerator idGenerator = IdGenerator.getInstance();
-    User user = User.init(name, idGenerator.generateId(name));
+    UserIdGenerator userIdGenerator = UserIdGenerator.getInstance();
+    User user = new User(name, userIdGenerator.generateId(name));
     userList.add(user);
     return user;
   }

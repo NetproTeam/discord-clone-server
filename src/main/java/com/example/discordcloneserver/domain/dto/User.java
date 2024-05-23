@@ -5,10 +5,6 @@ public record User (
   int id
 ) {
 
-  public static User init(String nickname, int id) {
-    return new User(nickname, id);
-  }
-
   public String getUniqueUserName() {
     return name + "#" + String.format("%04d", id);
   }
