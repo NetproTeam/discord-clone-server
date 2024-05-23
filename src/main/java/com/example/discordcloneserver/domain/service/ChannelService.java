@@ -22,11 +22,11 @@ public class ChannelService {
     return channelDataManager.addChannel(name);
   }
 
-  public Channel updateChannel(int id, String name) {
+  public Channel updateChannel(long id, String name) {
     return channelDataManager.updateChannel(id, name);
   }
 
-  public Channel deleteChannel(int id) {
+  public Channel deleteChannel(long id) {
     return channelDataManager.deleteChannel(id);
   }
 }

@@ -34,7 +34,7 @@ public class ChannelDataManager {
     return channel;
   }
 
-  public Channel updateChannel(int id, String newName) {
+  public Channel updateChannel(long id, String newName) {
     List<Channel> candidates = channelList.stream().filter(channel -> channel.id() == id).toList();
     if (candidates.isEmpty()) {
       throw new NotFoundException();
@@ -50,7 +50,7 @@ public class ChannelDataManager {
     return newChannel;
   }
 
-  public Channel deleteChannel(int id) {
+  public Channel deleteChannel(long id) {
     List<Channel> candidates = channelList.stream().filter(channel -> channel.id() == id).toList();
     if (candidates.isEmpty()) {
       throw new NotFoundException();

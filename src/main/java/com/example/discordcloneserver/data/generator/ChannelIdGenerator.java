@@ -11,13 +11,13 @@ public class ChannelIdGenerator {
     return instance;
   }
 
-  private int nextId;
+  private long nextId;
 
   private ChannelIdGenerator() {
     nextId = 0;
   }
 
-  public int generateId() {
+  public long generateId() {
     nextId += 1;
     return nextId;
   }

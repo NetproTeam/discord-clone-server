@@ -34,12 +34,12 @@ public class ChannelController {
   }
 
   @PatchMapping("/{id}")
-  public Channel updateChannel(@PathVariable int id, @RequestBody ChannelRequestBody channelInfo) {
+  public Channel updateChannel(@PathVariable long id, @RequestBody ChannelRequestBody channelInfo) {
     return channelService.updateChannel(id, channelInfo.name());
   }
 
   @DeleteMapping("/{id}")
-  public Channel deleteChannel(@PathVariable int id) {
+  public Channel deleteChannel(@PathVariable long id) {
     return channelService.deleteChannel(id);
   }
 }
