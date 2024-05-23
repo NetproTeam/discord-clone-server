@@ -1,8 +1,6 @@
 package com.example.discordcloneserver.data;
 
-import com.example.discordcloneserver.data.generator.IdGenerator;
 import com.example.discordcloneserver.domain.dto.Chat;
-import com.example.discordcloneserver.domain.dto.User;
 import java.util.ArrayList;
 import java.util.List;
 
