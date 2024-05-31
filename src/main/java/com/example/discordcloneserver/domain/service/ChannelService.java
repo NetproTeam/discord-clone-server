@@ -28,17 +28,15 @@ public class ChannelService {
   }
 
   public Channel updateChannel(long id, String name) {
-    return channelDataManager.updateChannel(id, name);
+    return channelDataManager.updateChannelName(id, name);
   }
 
   public Channel deleteChannel(long id) {
     return channelDataManager.deleteChannel(id);
   }
 
-  public Map<String, WebSocketSession> addClient(Channel channel, String uniqueName, WebSocketSession session) {
-    Map<String, WebSocketSession> clients = channel.clients();
-    clients.put(uniqueName, session);
-    return clients;
+  public void addClient(Channel channel, String uniqueName, WebSocketSession session) {
+    channelDataManager.addClients(channel.id(), uniqueName, session);
   }
 
   public Map<String, WebSocketSession> getClients(Channel channel){
@@ -47,7 +45,7 @@ public class ChannelService {
     return channelDto.map(Channel::clients).orElse(null);
   }
   public void removeClientByName(Channel channel, String uniqueName) {
-    channel.clients().remove(uniqueName);
+    channelDataManager.removeClients(channel.id(), uniqueName);
   }
 
   public boolean findClientCount(WebSocketMessage webSocketMessage){
