@@ -5,7 +5,6 @@ import com.example.discordcloneserver.data.ChatDataManager;
 import com.example.discordcloneserver.domain.dto.Chat;
 import com.example.discordcloneserver.error.exception.NotFoundException;
 import com.example.discordcloneserver.web.requestbody.ChatRequestBody;
-import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
