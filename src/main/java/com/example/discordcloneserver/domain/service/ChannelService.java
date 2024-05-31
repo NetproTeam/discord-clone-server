@@ -55,4 +55,11 @@ public class ChannelService {
         .findFirst().get();
     return channel.clients().size() > 1;
   }
+
+  public Integer getTotalClientCount() {
+    return channelDataManager.getChannelList().stream()
+        .map(Channel::clients)
+        .map(Map::size)
+        .reduce(0, Integer::sum);
+  }
 }
