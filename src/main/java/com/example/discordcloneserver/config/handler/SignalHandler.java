@@ -62,6 +62,7 @@ public class SignalHandler extends TextWebSocketHandler {
       switch (message.getType()) {
         case MSG_TYPE_ICE -> {
           Object candidate = message.getCandidate();
+          Object sdp = message.getSdp();
           Map<String, WebSocketSession> clients = channelService.getAllClients();
           clients.forEach((key, value) -> {
             if (!key.equals(uniqueName)) {
@@ -71,7 +72,7 @@ public class SignalHandler extends TextWebSocketHandler {
                   message.getType(),
                   Long.toString(roomId),
                   candidate,
-                  null
+                  sdp
               ));
             }
           });
