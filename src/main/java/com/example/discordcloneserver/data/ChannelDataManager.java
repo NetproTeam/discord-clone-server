@@ -58,7 +58,7 @@ public class ChannelDataManager {
     if (candidates.isEmpty()) {
       throw new NotFoundException();
     }
-    System.out.println(candidates.toString());
+
     if (candidates.size() > 1) {
       throw new IllegalStateException();
     }
