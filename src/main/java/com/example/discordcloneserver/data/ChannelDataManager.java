@@ -58,11 +58,13 @@ public class ChannelDataManager {
     if (candidates.isEmpty()) {
       throw new NotFoundException();
     }
+    System.out.println(candidates.toString());
     if (candidates.size() > 1) {
       throw new IllegalStateException();
     }
     Channel channel = candidates.get(0);
 
+    channelList.remove(channel);
     Map<String, WebSocketSession> newClients = new HashMap<>(channel.clients());
     newClients.put(clientName, session);
     Channel newChannel = new Channel(channel.name(), id, newClients);

@@ -59,7 +59,7 @@ public class SignalHandler extends TextWebSocketHandler {
     try {
       WebSocketMessage message = objectMapper.readValue(textMessage.getPayload(),WebSocketMessage.class);
       String uniqueName = message.getFrom();
-      long roomId = Long.parseLong(!message.getData().isEmpty() ? message.getData() : "0");
+      long roomId = Long.parseLong(!message.getData().isEmpty() ? message.getData() : "1");
       Channel channel;
       switch (message.getType()) {
         case MSG_TYPE_ICE -> {
