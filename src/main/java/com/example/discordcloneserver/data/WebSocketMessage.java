@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WebSocketMessage {
-  private String from;
-  private String type;
-  private String data;
-  private Object candidate;
-  private Object sdp;
+  private String from; // sender's unique name
+  private String type; // message type
+  private String data; // room id
+  private Object candidate; // ice candidate
+  private Object sdp; // session description protocol
 }
