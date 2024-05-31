@@ -4,6 +4,7 @@ import com.example.discordcloneserver.data.ChannelDataManager;
 import com.example.discordcloneserver.data.WebSocketMessage;
 import com.example.discordcloneserver.domain.dto.Channel;
 import com.example.discordcloneserver.domain.exception.MaxChannelCountException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,5 +62,14 @@ public class ChannelService {
         .map(Channel::clients)
         .map(Map::size)
         .reduce(0, Integer::sum);
+  }
+
+  public Map<String, WebSocketSession> getAllClients() {
+    return channelDataManager.getChannelList().stream()
+        .map(Channel::clients)
+        .reduce(new HashMap<>(), (acc, clients) -> {
+          acc.putAll(clients);
+          return acc;
+        });
   }
 }

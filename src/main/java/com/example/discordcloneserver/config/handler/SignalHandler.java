@@ -57,10 +57,26 @@ public class SignalHandler extends TextWebSocketHandler {
     try {
       WebSocketMessage message = objectMapper.readValue(textMessage.getPayload(),WebSocketMessage.class);
       String uniqueName = message.getFrom();
-      long roomId = Long.parseLong(message.getData());
+      long roomId = Long.parseLong(!message.getData().isEmpty() ? message.getData() : "0");
       Channel channel;
       switch (message.getType()) {
-        case MSG_TYPE_OFFER, MSG_TYPE_ANSWER, MSG_TYPE_ICE -> {
+        case MSG_TYPE_ICE -> {
+          Object candidate = message.getCandidate();
+          Map<String, WebSocketSession> clients = channelService.getAllClients();
+          clients.forEach((key, value) -> {
+            if (!key.equals(uniqueName)) {
+              System.out.println("[ws] Send to: " + key + " in room: " + roomId);
+              sendMessage(value, new WebSocketMessage(
+                  uniqueName,
+                  message.getType(),
+                  Long.toString(roomId),
+                  candidate,
+                  null
+              ));
+            }
+          });
+        }
+        case MSG_TYPE_OFFER, MSG_TYPE_ANSWER -> {
           Object candidate = message.getCandidate();
           Object sdp = message.getSdp();
           Optional<Channel> channelDto = rooms.stream()
