@@ -62,8 +62,6 @@ public class ChannelDataManager {
       throw new IllegalStateException();
     }
     Channel channel = candidates.get(0);
-    System.out.println("remove channel : " + channelList.remove(channel));
-    System.out.println(channelList);
 
     Map<String, WebSocketSession> newClients = new HashMap<>(channel.clients());
     newClients.put(clientName, session);
