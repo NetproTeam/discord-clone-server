@@ -4,6 +4,7 @@ import com.example.discordcloneserver.data.generator.ChannelIdGenerator;
 import com.example.discordcloneserver.domain.dto.Channel;
 import com.example.discordcloneserver.error.exception.NotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ChannelDataManager {
@@ -29,7 +30,7 @@ public class ChannelDataManager {
 
   public Channel addChannel(String name) {
     ChannelIdGenerator idGenerator = ChannelIdGenerator.getInstance();
-    Channel channel = new Channel(name, idGenerator.generateId());
+    Channel channel = new Channel(name, idGenerator.generateId(), new HashMap<>());
     channelList.add(channel);
     return channel;
   }
@@ -45,7 +46,7 @@ public class ChannelDataManager {
     Channel channel = candidates.get(0);
     channelList.remove(channel);
 
-    Channel newChannel = new Channel(newName, id);
+    Channel newChannel = new Channel(newName, id, new HashMap<>(channel.clients()));
     channelList.add(newChannel);
     return newChannel;
   }

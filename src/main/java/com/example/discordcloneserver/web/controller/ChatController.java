@@ -18,7 +18,7 @@ public class ChatController {
   ChannelDataManager channelDataManager = ChannelDataManager.getInstance();
 
   @MessageMapping("/chat/{roomId}")
-  @SendTo("/send/{roomId}")
+  @SendTo("/send/chat/{roomId}")
   public Chat chat(@DestinationVariable Long roomId, ChatRequestBody message) {
     if (!channelDataManager.existsChannel(roomId)) {
       throw new NotFoundException();
