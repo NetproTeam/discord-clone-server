@@ -3,6 +3,7 @@ package com.example.discordcloneserver.config.handler;
 import com.example.discordcloneserver.data.ChannelDataManager;
 import com.example.discordcloneserver.data.WebSocketMessage;
 import com.example.discordcloneserver.domain.dto.Channel;
+import com.example.discordcloneserver.domain.exception.MaxLoginCountException;
 import com.example.discordcloneserver.domain.service.ChannelService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -33,6 +34,15 @@ public class SignalHandler extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
+    if (rooms.stream().anyMatch(c -> channelService.getClients(c).containsValue(session))) {
+      Channel channel = rooms.stream()
+          .filter(c -> channelService.getClients(c).containsValue(session)).findFirst().get();
+      String uniqueName = rooms.stream().filter(c -> channelService.getClients(c).containsValue(session))
+          .findFirst().get().clients().entrySet().stream()
+          .filter(entry -> entry.getValue().equals(session))
+          .findFirst().get().getKey();
+      channelService.removeClientByName(channel, uniqueName);
+    }
     System.out.println("[ws] Session has been closed: " + session.getId() + "with status: " + status);
   }
 
@@ -82,6 +92,10 @@ public class SignalHandler extends TextWebSocketHandler {
           channel = ChannelDataManager.getInstance().getChannelList().stream()
               .filter(c -> c.id() == roomId)
               .findFirst().get();
+          if (channelService.getTotalClientCount() >= 6) {
+            sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, "false", null, null));
+            throw new MaxLoginCountException();
+          }
           channelService.addClient(channel, uniqueName, session);
           // TODO: 유저 카운트 한다면 추가 필요
           rooms.add(channel);
