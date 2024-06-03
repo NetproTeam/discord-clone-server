@@ -45,8 +45,10 @@ public class SignalHandler extends TextWebSocketHandler {
           .filter(entry -> entry.getValue().equals(session))
           .findFirst().get().getKey();
       channelService.removeClientByName(channel, uniqueName);
+      System.out.println("[ws] " + "Notify to all members");
       channelService.getChannelList().forEach(c -> {
         c.clients().forEach((key, value) -> {
+          System.out.println("[ws] Send to: " + key + " in room: " + c.id() + " in type: " + MSG_TYPE_STATE);
           sendMessage(value,
               new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
         });
