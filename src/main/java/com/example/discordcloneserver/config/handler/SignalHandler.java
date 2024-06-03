@@ -5,6 +5,7 @@ import com.example.discordcloneserver.data.WebSocketMessage;
 import com.example.discordcloneserver.domain.dto.Channel;
 import com.example.discordcloneserver.domain.exception.MaxLoginCountException;
 import com.example.discordcloneserver.domain.service.ChannelService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class SignalHandler extends TextWebSocketHandler {
   private static final String MSG_TYPE_ICE = "ice";
   private static final String MSG_TYPE_JOIN = "join";
   private static final String MSG_TYPE_LEAVE = "leave";
+  private static final String MSG_TYPE_STATE = "state";
 
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
@@ -43,6 +45,12 @@ public class SignalHandler extends TextWebSocketHandler {
           .filter(entry -> entry.getValue().equals(session))
           .findFirst().get().getKey();
       channelService.removeClientByName(channel, uniqueName);
+      channelService.getChannelList().forEach(c -> {
+        c.clients().forEach((key, value) -> {
+          sendMessage(value,
+              new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
+        });
+      });
     }
     System.out.println("[ws] Session has been closed: " + session.getId() + "with status: " + status);
   }
@@ -116,7 +124,14 @@ public class SignalHandler extends TextWebSocketHandler {
                 new WebSocketMessage("Server", MSG_TYPE_JOIN, "false", null, null));
             throw new MaxLoginCountException();
           }
+
           channelService.addClient(channel, uniqueName, session);
+          channelService.getChannelList().forEach(c -> {
+            c.clients().forEach((key, value) -> {
+              sendMessage(value,
+                  new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
+            });
+          });
         }
         case MSG_TYPE_LEAVE -> {
           System.out.println("[ws] Leave: " + uniqueName + " from " + roomId);
@@ -128,6 +143,12 @@ public class SignalHandler extends TextWebSocketHandler {
               .findFirst();
           if (clientName.isPresent()) {
             channelService.removeClientByName(channel, clientName.get());
+            channelService.getChannelList().forEach(c -> {
+              c.clients().forEach((key, value) -> {
+                sendMessage(value,
+                    new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
+              });
+            });
             //TODO: 유저 카운트 한다면 추가 필요
             System.out.println("[ws] " + uniqueName + "삭제 완료 in room : " + roomId);
           }
@@ -147,5 +168,15 @@ public class SignalHandler extends TextWebSocketHandler {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  private String toJsonString(Object object){
+    try {
+      System.out.println(object.toString());
+      return objectMapper.writeValueAsString(object);
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 }
