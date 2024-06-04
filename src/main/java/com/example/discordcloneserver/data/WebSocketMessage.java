@@ -13,4 +13,5 @@ public class WebSocketMessage {
   private String data; // room id
   private Object candidate; // ice candidate
   private Object sdp; // session description protocol
+  private Object other; // other data
 }
