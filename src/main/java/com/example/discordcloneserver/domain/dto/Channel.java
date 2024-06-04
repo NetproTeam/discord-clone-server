@@ -14,6 +14,9 @@ public record Channel (
 
   @JsonGetter("clients")
   List<String> clientNames() {
+    if (clients.isEmpty()) {
+      return List.of();
+    }
     return List.copyOf(clients.keySet());
   }
 

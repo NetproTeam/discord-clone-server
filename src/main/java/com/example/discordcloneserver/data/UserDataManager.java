@@ -31,6 +31,9 @@ public class UserDataManager {
   }
 
   public List<User> getUserList() {
+    if (userList.isEmpty()) {
+      return List.of();
+    }
     return List.copyOf(userList);
   }
 }

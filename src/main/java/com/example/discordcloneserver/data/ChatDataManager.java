@@ -25,6 +25,9 @@ public class ChatDataManager {
   }
 
   public List<Chat> getChatList() {
+    if (chatList.isEmpty()) {
+      return List.of();
+    }
     return List.copyOf(chatList);
   }
 

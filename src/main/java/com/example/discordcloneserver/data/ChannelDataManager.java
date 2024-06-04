@@ -27,6 +27,9 @@ public class ChannelDataManager {
   private final List<Channel> channelList;
 
   public List<Channel> getChannelList() {
+    if (channelList.isEmpty()) {
+      return List.of();
+    }
     return List.copyOf(channelList);
   }
 
