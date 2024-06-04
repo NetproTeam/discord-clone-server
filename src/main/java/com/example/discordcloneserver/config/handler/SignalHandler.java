@@ -34,6 +34,8 @@ public class SignalHandler extends TextWebSocketHandler {
   private static final String MSG_TYPE_LEAVE = "leave";
   private static final String MSG_TYPE_STATE = "state";
 
+  private static final String MSG_TYPE_MODE_CHANGE = "mode_change";
+
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
     List<Channel> rooms = channelDataManager.getChannelList();
@@ -50,7 +52,7 @@ public class SignalHandler extends TextWebSocketHandler {
         c.clients().forEach((key, value) -> {
           System.out.println("[ws] Send to: " + key + " in room: " + c.id() + " in type: " + MSG_TYPE_STATE);
           sendMessage(value,
-              new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
+              new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null));
         });
       });
     }
@@ -60,7 +62,7 @@ public class SignalHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionEstablished(WebSocketSession session){
     List<Channel> rooms = channelDataManager.getChannelList();
-    sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, Boolean.toString(!rooms.isEmpty()), null, null));
+    sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, Boolean.toString(!rooms.isEmpty()), null, null, null));
   }
 
   @Override
@@ -69,7 +71,12 @@ public class SignalHandler extends TextWebSocketHandler {
     try {
       WebSocketMessage message = objectMapper.readValue(textMessage.getPayload(),WebSocketMessage.class);
       String uniqueName = message.getFrom();
-      long roomId = Long.parseLong(!message.getData().isEmpty() ? message.getData() : "1");
+      long roomId;
+      if (message.getData() == null){
+        roomId = 1;
+      } else {
+        roomId = Long.parseLong(message.getData());
+      }
       Channel channel;
       switch (message.getType()) {
         case MSG_TYPE_ICE -> {
@@ -84,7 +91,8 @@ public class SignalHandler extends TextWebSocketHandler {
                   message.getType(),
                   Long.toString(roomId),
                   candidate,
-                  sdp
+                  sdp,
+                  null
               ));
             }
           });
@@ -105,7 +113,8 @@ public class SignalHandler extends TextWebSocketHandler {
                     message.getType(),
                     Long.toString(roomId),
                     candidate,
-                    sdp
+                    sdp,
+                    null
                 ));
               }
             });
@@ -123,7 +132,7 @@ public class SignalHandler extends TextWebSocketHandler {
           }
           if (channelService.getTotalClientCount() >= 6) {
             sendMessage(session,
-                new WebSocketMessage("Server", MSG_TYPE_JOIN, "false", null, null));
+                new WebSocketMessage("Server", MSG_TYPE_JOIN, "false", null, null,null));
             throw new MaxLoginCountException();
           }
 
@@ -131,7 +140,7 @@ public class SignalHandler extends TextWebSocketHandler {
           channelService.getChannelList().forEach(c -> {
             c.clients().forEach((key, value) -> {
               sendMessage(value,
-                  new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
+                  new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null));
             });
           });
         }
@@ -148,17 +157,27 @@ public class SignalHandler extends TextWebSocketHandler {
             channelService.getChannelList().forEach(c -> {
               c.clients().forEach((key, value) -> {
                 sendMessage(value,
-                    new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
+                    new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null));
               });
               channelService.getClients(channel).forEach((key, value) -> {
                 System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: " + MSG_TYPE_LEAVE);
                 sendMessage(value,
-                    new WebSocketMessage(clientName.get(), MSG_TYPE_LEAVE, Objects.toString(channel.id()), null, null));
+                    new WebSocketMessage(clientName.get(), MSG_TYPE_LEAVE, Objects.toString(channel.id()), null, null, null));
               });
             });
             //TODO: 유저 카운트 한다면 추가 필요
             System.out.println("[ws] " + uniqueName + "삭제 완료 in room : " + roomId);
           }
+        }
+        case MSG_TYPE_MODE_CHANGE -> {
+          System.out.println("[ws] Mode Change: " + message.getData());
+          channel = rooms.stream()
+              .filter(c -> c.id() == roomId)
+              .findFirst().get();
+          channel.clients().forEach((key, value) -> {
+            System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: " + MSG_TYPE_MODE_CHANGE);
+            sendMessage(value, new WebSocketMessage("Server", MSG_TYPE_MODE_CHANGE, message.getData(), null, null, message.getOther()));
+          });
         }
         default -> {
         }
