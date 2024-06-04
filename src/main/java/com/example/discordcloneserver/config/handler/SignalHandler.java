@@ -36,33 +36,39 @@ public class SignalHandler extends TextWebSocketHandler {
 
   private static final String MSG_TYPE_MODE_CHANGE = "mode_change";
 
+  private static final String MSG_TYPE_READY = "ready";
+
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
     List<Channel> rooms = channelDataManager.getChannelList();
     if (rooms.stream().anyMatch(c -> channelService.getClients(c).containsValue(session))) {
-      Channel channel = rooms.stream()
-          .filter(c -> channelService.getClients(c).containsValue(session)).findFirst().get();
-      String uniqueName = rooms.stream().filter(c -> channelService.getClients(c).containsValue(session))
-          .findFirst().get().clients().entrySet().stream()
-          .filter(entry -> entry.getValue().equals(session))
-          .findFirst().get().getKey();
-      channelService.removeClientByName(channel, uniqueName);
-      System.out.println("[ws] " + "Notify to all members");
-      channelService.getChannelList().forEach(c -> {
-        c.clients().forEach((key, value) -> {
-          System.out.println("[ws] Send to: " + key + " in room: " + c.id() + " in type: " + MSG_TYPE_STATE);
+      Optional<Channel> channelDto = rooms.stream()
+          .filter(c -> channelService.getClients(c).containsValue(session))
+          .findFirst();
+      if (channelDto.isPresent()) {
+        Channel channel = channelDto.get();
+        String uniqueName = rooms.stream()
+            .filter(c -> channelService.getClients(c).containsValue(session))
+            .findFirst().orElseGet(() -> channelService.makeChannel("exception")).clients().entrySet().stream()
+            .filter(entry -> entry.getValue().equals(session))
+            .findFirst().orElseGet(() -> Map.entry("exception", session)).getKey();
+        channelService.removeClientByName(channel, uniqueName);
+        System.out.println("[ws] " + "Notify to all members");
+        channelService.getChannelList().forEach(c -> c.clients().forEach((key, value) -> {
+          System.out.println(
+              "[ws] Send to: " + key + " in room: " + c.id() + " in type: " + MSG_TYPE_STATE);
           sendMessage(value,
-              new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null));
-        });
-      });
+              new WebSocketMessage("Server", MSG_TYPE_STATE,
+                  toJsonString(channelService.getChannelList()), null, null, null, key));
+        }));
+      }
     }
     System.out.println("[ws] Session has been closed: " + session.getId() + "with status: " + status);
   }
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session){
-    List<Channel> rooms = channelDataManager.getChannelList();
-    sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, Boolean.toString(!rooms.isEmpty()), null, null, null));
+    System.out.println("[ws] Session has been established: " + session.getId());
   }
 
   @Override
@@ -84,7 +90,7 @@ public class SignalHandler extends TextWebSocketHandler {
           Object sdp = message.getSdp();
           Map<String, WebSocketSession> clients = channelService.getAllClients();
           clients.forEach((key, value) -> {
-            if (!key.equals(uniqueName)) {
+            if (!key.equals(uniqueName) && key.equals(message.getTo())) {
               System.out.println("[ws] Send to: " + key + " in room: " + roomId);
               sendMessage(value, new WebSocketMessage(
                   uniqueName,
@@ -92,7 +98,8 @@ public class SignalHandler extends TextWebSocketHandler {
                   Long.toString(roomId),
                   candidate,
                   sdp,
-                  null
+                  null,
+                  key
               ));
             }
           });
@@ -106,7 +113,7 @@ public class SignalHandler extends TextWebSocketHandler {
           if (channelDto.isPresent()) {
             Map<String, WebSocketSession> clients = channelService.getClients(channelDto.get());
             clients.forEach((key, value) -> {
-              if (!key.equals(uniqueName)) {
+              if (!key.equals(uniqueName) && key.equals(message.getTo())) {
                 System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: " + message.getType());
                 sendMessage(value, new WebSocketMessage(
                     uniqueName,
@@ -114,7 +121,8 @@ public class SignalHandler extends TextWebSocketHandler {
                     Long.toString(roomId),
                     candidate,
                     sdp,
-                    null
+                    null,
+                    key
                 ));
               }
             });
@@ -125,59 +133,80 @@ public class SignalHandler extends TextWebSocketHandler {
           Optional<Channel> cha = ChannelDataManager.getInstance().getChannelList().stream()
               .filter(c -> c.id() == roomId)
               .findFirst();
-          if (!cha.isEmpty()) {
-            channel = cha.get();
-          } else {
-            channel = channelService.makeChannel("room" + roomId);
-          }
+          channel = cha.orElseGet(() -> channelService.makeChannel("room" + roomId));
           if (channelService.getTotalClientCount() >= 6) {
             sendMessage(session,
-                new WebSocketMessage("Server", MSG_TYPE_JOIN, "false", null, null,null));
+                new WebSocketMessage("Server", MSG_TYPE_JOIN, "false", null, null,null, uniqueName));
             throw new MaxLoginCountException();
           }
 
           channelService.addClient(channel, uniqueName, session);
-          channelService.getChannelList().forEach(c -> {
-            c.clients().forEach((key, value) -> {
-              sendMessage(value,
-                  new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null));
-            });
-          });
+          channelService.getChannelList().forEach(c -> c.clients().forEach((key, value) -> sendMessage(value,
+              new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null,key))));
         }
         case MSG_TYPE_LEAVE -> {
           System.out.println("[ws] Leave: " + uniqueName + " from " + roomId);
-          channel = rooms.stream()
+          Optional<Channel> channelDto = rooms.stream()
               .filter(c -> c.id() == roomId)
-              .findFirst().get();
-          Optional<String> clientName = channelService.getClients(channel).keySet().stream()
-              .filter(key -> Objects.equals(key, uniqueName))
               .findFirst();
-          if (clientName.isPresent()) {
-            channelService.removeClientByName(channel, clientName.get());
-            channelService.getChannelList().forEach(c -> {
-              c.clients().forEach((key, value) -> {
-                sendMessage(value,
-                    new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null));
+          if (channelDto.isPresent()) {
+            channel = channelDto.get();
+            Optional<String> clientName = channelService.getClients(channel).keySet().stream()
+                .filter(key -> Objects.equals(key, uniqueName))
+                .findFirst();
+            if (clientName.isPresent()) {
+              channelService.removeClientByName(channel, clientName.get());
+              channelService.getChannelList().forEach(c -> {
+                c.clients().forEach((key, value) -> sendMessage(value,
+                    new WebSocketMessage("Server", MSG_TYPE_STATE,
+                        toJsonString(channelService.getChannelList()), null, null, null, key)));
+                channelService.getClients(channel).forEach((key, value) -> {
+                  System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: "
+                      + MSG_TYPE_LEAVE);
+                  sendMessage(value,
+                      new WebSocketMessage(clientName.get(), MSG_TYPE_LEAVE,
+                          Objects.toString(channel.id()), null, null, null, key));
+                });
               });
-              channelService.getClients(channel).forEach((key, value) -> {
-                System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: " + MSG_TYPE_LEAVE);
-                sendMessage(value,
-                    new WebSocketMessage(clientName.get(), MSG_TYPE_LEAVE, Objects.toString(channel.id()), null, null, null));
-              });
-            });
-            //TODO: 유저 카운트 한다면 추가 필요
-            System.out.println("[ws] " + uniqueName + "삭제 완료 in room : " + roomId);
+              System.out.println("[ws] " + uniqueName + "삭제 완료 in room : " + roomId);
+            }
           }
         }
         case MSG_TYPE_MODE_CHANGE -> {
           System.out.println("[ws] Mode Change: " + message.getData());
-          channel = rooms.stream()
+          Optional<Channel> channelDto = rooms.stream()
               .filter(c -> c.id() == roomId)
-              .findFirst().get();
-          channel.clients().forEach((key, value) -> {
-            System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: " + MSG_TYPE_MODE_CHANGE);
-            sendMessage(value, new WebSocketMessage("Server", MSG_TYPE_MODE_CHANGE, message.getData(), null, null, message.getOther()));
-          });
+              .findFirst();
+          if (channelDto.isPresent()) {
+            channel = channelDto.get();
+            channel.clients().forEach((key, value) -> {
+              if (key.equals(message.getTo())) {
+                System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: "
+                    + MSG_TYPE_MODE_CHANGE);
+                sendMessage(value,
+                    new WebSocketMessage("Server", MSG_TYPE_MODE_CHANGE, message.getData(), null,
+                        null, message.getOther(), key));
+              }
+            });
+          }
+        }
+        case MSG_TYPE_READY -> {
+          System.out.println("[ws] Ready: " + message.getData());
+          Optional<Channel> channelDto = rooms.stream()
+              .filter(c -> c.id() == roomId)
+              .findFirst();
+          if (channelDto.isPresent()) {
+            channel = channelDto.get();
+            List<String> readyList = channel.clients().keySet().stream().toList();
+            System.out.println(
+                "[ws] Send to " + message.getFrom() + " in room: " + roomId + " in type: "
+                    + MSG_TYPE_READY);
+            Object other = objectMapper.readValue("{\"readyList\":" + toJsonString(readyList) + '}',
+                Object.class);
+            sendMessage(session,
+                new WebSocketMessage("Server", MSG_TYPE_READY, message.getData(), null, null, other,
+                    message.getFrom()));
+          }
         }
         default -> {
         }
