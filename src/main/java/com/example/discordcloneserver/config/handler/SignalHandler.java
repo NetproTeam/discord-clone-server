@@ -72,7 +72,7 @@ public class SignalHandler extends TextWebSocketHandler {
       WebSocketMessage message = objectMapper.readValue(textMessage.getPayload(),WebSocketMessage.class);
       String uniqueName = message.getFrom();
       long roomId;
-      if (message.getData() == null){
+      if (message.getData().isEmpty()){
         roomId = 1;
       } else {
         roomId = Long.parseLong(message.getData());
