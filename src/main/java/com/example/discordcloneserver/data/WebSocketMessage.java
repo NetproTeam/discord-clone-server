@@ -14,4 +14,5 @@ public class WebSocketMessage {
   private Object candidate; // ice candidate
   private Object sdp; // session description protocol
   private Object other; // other data
+  private String to; // receiver's unique name or unique name list
 }
