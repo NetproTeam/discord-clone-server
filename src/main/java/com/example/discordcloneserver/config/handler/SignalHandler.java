@@ -150,6 +150,11 @@ public class SignalHandler extends TextWebSocketHandler {
                 sendMessage(value,
                     new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null));
               });
+              channelService.getClients(channel).forEach((key, value) -> {
+                System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: " + MSG_TYPE_STATE);
+                sendMessage(value,
+                    new WebSocketMessage(clientName.get(), MSG_TYPE_LEAVE, Objects.toString(channel.id()), null, null));
+              });
             });
             //TODO: 유저 카운트 한다면 추가 필요
             System.out.println("[ws] " + uniqueName + "삭제 완료 in room : " + roomId);
