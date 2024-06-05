@@ -40,7 +40,6 @@ public class SignalHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
     List<Channel> rooms = channelDataManager.getChannelList();
-
     Optional<Channel> channelOptional = rooms.stream()
         .filter(c -> channelService.getClients(c).containsValue(session))
         .findFirst();
@@ -84,7 +83,7 @@ public class SignalHandler extends TextWebSocketHandler {
           Object sdp = message.getSdp();
           Map<String, WebSocketSession> clients = channelService.getAllClients();
           clients.forEach((key, value) -> {
-            if (!key.equals(uniqueName) && key.equals(message.getTo())) {
+            if (!key.equals(uniqueName)) {
               System.out.println("[ws] Send to: " + key + " in room: " + roomId);
               sendMessage(value, new WebSocketMessage(
                   uniqueName,
