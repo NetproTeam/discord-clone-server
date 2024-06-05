@@ -27,6 +27,7 @@ public class ChannelDataManager {
   private final List<Channel> channelList;
 
   public List<Channel> getChannelList() {
+    System.out.println("channelList: " + channelList); // TODO channel에 null이 들어가는 이유?
     if (channelList.isEmpty()) {
       return List.of();
     }
