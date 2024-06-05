@@ -40,27 +40,22 @@ public class SignalHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
     List<Channel> rooms = channelDataManager.getChannelList();
-    if (rooms.stream().anyMatch(c -> channelService.getClients(c).containsValue(session))) {
-      Optional<Channel> channelDto = rooms.stream()
-          .filter(c -> channelService.getClients(c).containsValue(session))
-          .findFirst();
-      if (channelDto.isPresent()) {
-        Channel channel = channelDto.get();
-        String uniqueName = rooms.stream()
-            .filter(c -> channelService.getClients(c).containsValue(session))
-            .findFirst().orElseGet(() -> channelService.makeChannel("exception")).clients().entrySet().stream()
-            .filter(entry -> entry.getValue().equals(session))
-            .findFirst().orElseGet(() -> Map.entry("exception", session)).getKey();
-        channelService.removeClientByName(channel, uniqueName);
-        System.out.println("[ws] " + "Notify to all members");
-        channelService.getChannelList().forEach(c -> c.clients().forEach((key, value) -> {
-          System.out.println(
-              "[ws] Send to: " + key + " in room: " + c.id() + " in type: " + MSG_TYPE_STATE);
-          sendMessage(value,
-              new WebSocketMessage("Server", MSG_TYPE_STATE,
-                  toJsonString(channelService.getChannelList()), null, null, null, key));
-        }));
-      }
+
+    Optional<Channel> channelOptional = rooms.stream()
+        .filter(c -> channelService.getClients(c).containsValue(session))
+        .findFirst();
+    if (channelOptional.isPresent()) {
+      Channel channel = channelOptional.get();
+      String uniqueName = channel.clients().entrySet().stream()
+          .filter(entry -> entry.getValue().equals(session))
+          .findFirst()
+          .orElseGet(() -> Map.entry("exception", session))
+          .getKey();
+
+      channelService.removeClientByName(channel, uniqueName);
+
+      System.out.println("[ws] " + "Notify to all members");
+      sendAllMessage(MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null, null);
     }
     System.out.println("[ws] Session has been closed: " + session.getId() + "with status: " + status);
   }
@@ -142,8 +137,7 @@ public class SignalHandler extends TextWebSocketHandler {
           }
           if (channelService.getTotalClientCount() >= 6) {
             sendMessage(session,
-                new WebSocketMessage("Server", MSG_TYPE_JOIN, "-1", null,
-                    null, null, uniqueName));
+                new WebSocketMessage("Server", MSG_TYPE_JOIN, "-1", null, null, null, uniqueName));
             throw new MaxLoginCountException();
           }
           channel = cha.get();
@@ -152,12 +146,10 @@ public class SignalHandler extends TextWebSocketHandler {
           List<String> otherPeerNamesOnChannel = channel.clients().keySet().stream().filter(
               name -> !name.equals(uniqueName)
           ).toList();
-          Object other = objectMapper.readValue("{\"readyList\":" + toJsonString(otherPeerNamesOnChannel) + '}',
-              Object.class);
+          Object other = objectMapper.readValue("{\"readyList\":" + toJsonString(otherPeerNamesOnChannel) + '}', Object.class);
           sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, String.valueOf(channel.id()), null, null, other, uniqueName));
 
-          channelService.getChannelList().forEach(c -> c.clients().forEach((key, value) -> sendMessage(value,
-              new WebSocketMessage("Server", MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null,null, key))));
+          sendAllMessage(MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null, null);
         }
         case MSG_TYPE_LEAVE -> {
           System.out.println("[ws] Leave: " + uniqueName + " from " + roomId);
@@ -171,17 +163,12 @@ public class SignalHandler extends TextWebSocketHandler {
                 .findFirst();
             if (clientName.isPresent()) {
               channelService.removeClientByName(channel, clientName.get());
-              channelService.getChannelList().forEach(c -> {
-                c.clients().forEach((key, value) -> sendMessage(value,
-                    new WebSocketMessage("Server", MSG_TYPE_STATE,
-                        toJsonString(channelService.getChannelList()), null, null, null, key)));
-                channelService.getClients(channel).forEach((key, value) -> {
-                  System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: "
-                      + MSG_TYPE_LEAVE);
-                  sendMessage(value,
-                      new WebSocketMessage(clientName.get(), MSG_TYPE_LEAVE,
-                          Objects.toString(channel.id()), null, null, null, key));
-                });
+
+              sendAllMessage(MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null, null);
+
+              channelService.getClients(channel).forEach((key, value) -> {
+                System.out.println("[ws] Send to: " + key + " in room: " + roomId + " in type: " + MSG_TYPE_LEAVE);
+                sendMessage(value, new WebSocketMessage(clientName.get(), MSG_TYPE_LEAVE, Objects.toString(channel.id()), null, null, null, key));
               });
               System.out.println("[ws] " + uniqueName + "삭제 완료 in room : " + roomId);
             }
@@ -218,7 +205,7 @@ public class SignalHandler extends TextWebSocketHandler {
       String json = objectMapper.writeValueAsString(message);
       session.sendMessage(new TextMessage(json));
     } catch (Exception e) {
-      e.printStackTrace();
+      System.out.println("[ws] closed session: " + session.getId() + " in sendMessage");
     }
   }
 
@@ -230,5 +217,13 @@ public class SignalHandler extends TextWebSocketHandler {
       e.printStackTrace();
     }
     return null;
+  }
+
+  private void sendAllMessage(String type, String data, Object candidate, Object sdp, Object other){
+    channelService.getChannelList().forEach(c -> {
+      c.clients().forEach((key, value) -> sendMessage(value,
+          new WebSocketMessage("SERVER", type, data,
+              null, null, null, key)));
+    });
   }
 }
