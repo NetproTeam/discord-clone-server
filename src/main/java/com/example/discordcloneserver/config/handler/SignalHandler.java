@@ -60,6 +60,13 @@ public class SignalHandler extends TextWebSocketHandler {
               new WebSocketMessage("Server", MSG_TYPE_STATE,
                   toJsonString(channelService.getChannelList()), null, null, null, key));
         }));
+        channelService.getClients(channel).forEach((key, value) -> {
+          System.out.println("[ws] Send to: " + key + " in room: " + channel.id() + " in type: "
+              + MSG_TYPE_LEAVE);
+          sendMessage(value,
+              new WebSocketMessage(uniqueName, MSG_TYPE_LEAVE, Objects.toString(channel.id()), null,
+                  null, null, key));
+        });
       }
     }
     System.out.println("[ws] Session has been closed: " + session.getId() + "with status: " + status);
@@ -89,7 +96,7 @@ public class SignalHandler extends TextWebSocketHandler {
           Object sdp = message.getSdp();
           Map<String, WebSocketSession> clients = channelService.getAllClients();
           clients.forEach((key, value) -> {
-            if (!key.equals(uniqueName) && key.equals(message.getTo())) {
+            if (!key.equals(uniqueName)) {
               System.out.println("[ws] Send to: " + key + " in room: " + roomId);
               sendMessage(value, new WebSocketMessage(
                   uniqueName,
