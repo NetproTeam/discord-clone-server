@@ -23,7 +23,8 @@
 ## API 가이드
 - swagger url
   - https://app.swaggerhub.com/apis/PKW3322_1/DiscordCloneServer/1.0.0
+  - http://localhost:8080/swagger-ui/index.html#/
 - Chatting Socket 접속 url
-  - wss://127.0.0.1/
+  - ws://127.0.0.1:8080/
 - RTC Signal Server url
-  - wss://127.0.0.1/signal
+  - ws://127.0.0.1:8080/signal
