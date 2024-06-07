@@ -19,7 +19,7 @@ public class WebStompConfig implements WebSocketMessageBrokerConfigurer {
 
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
-    registry.addEndpoint("/")
+    registry.addEndpoint("/chatting")
         .setAllowedOriginPatterns("*")
         .withSockJS();
   }
