@@ -17,6 +17,6 @@ public class ChannelInitializer implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    channelService.makeChannel("general");
+    channelService.makeChannel("general", "");
   }
 }

@@ -9,6 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 public record Channel (
   String name,
   long id,
+  String createdBy,
   @JsonIgnore Map<String, WebSocketSession> clients
 ) {
 

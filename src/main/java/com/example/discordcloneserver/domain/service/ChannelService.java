@@ -20,11 +20,11 @@ public class ChannelService {
     return channelDataManager.getChannelList();
   }
 
-  public Channel makeChannel(String name) {
+  public Channel makeChannel(String name, String createdBy) {
     if (channelDataManager.getChannelList().size() >= 6) {
       throw new MaxChannelCountException();
     }
-    return channelDataManager.addChannel(name);
+    return channelDataManager.addChannel(name, createdBy);
   }
 
   public Channel updateChannel(long id, String name) {

@@ -34,9 +34,9 @@ public class ChannelDataManager {
     return List.copyOf(channelList);
   }
 
-  public Channel addChannel(String name) {
+  public Channel addChannel(String name, String createdBy) {
     ChannelIdGenerator idGenerator = ChannelIdGenerator.getInstance();
-    Channel channel = new Channel(name, idGenerator.generateId(), new HashMap<>());
+    Channel channel = new Channel(name, idGenerator.generateId(), createdBy, new HashMap<>());
     channelList.add(channel);
     return channel;
   }
@@ -52,7 +52,7 @@ public class ChannelDataManager {
     Channel channel = candidates.get(0);
     channelList.remove(channel);
 
-    Channel newChannel = new Channel(newName, id, new HashMap<>(channel.clients()));
+    Channel newChannel = new Channel(newName, id, channel.createdBy(), new HashMap<>(channel.clients()));
     channelList.add(newChannel);
     return newChannel;
   }
@@ -71,7 +71,7 @@ public class ChannelDataManager {
     channelList.remove(channel);
     Map<String, WebSocketSession> newClients = new HashMap<>(channel.clients());
     newClients.put(clientName, session);
-    Channel newChannel = new Channel(channel.name(), id, newClients);
+    Channel newChannel = new Channel(channel.name(), id, channel.createdBy(), newClients);
     channelList.add(newChannel);
     return newChannel;
   }
@@ -89,7 +89,7 @@ public class ChannelDataManager {
 
     Map<String, WebSocketSession> newClients = new HashMap<>(channel.clients());
     newClients.remove(clientName);
-    Channel newChannel = new Channel(channel.name(), id, newClients);
+    Channel newChannel = new Channel(channel.name(), id, channel.createdBy(), newClients);
     channelList.add(newChannel);
     return newChannel;
   }
