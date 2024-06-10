@@ -55,6 +55,10 @@ public class SignalHandler extends TextWebSocketHandler {
 
       System.out.println("[ws] " + "Notify to all members");
       sendAllMessage(MSG_TYPE_STATE, toJsonString(channelService.getChannelList()), null, null, null);
+      channel.clients().forEach((key, value) -> {
+        System.out.println("[ws] Send to: " + key + " in room: " + channel.id() + " in type: " + MSG_TYPE_LEAVE);
+        sendMessage(value, new WebSocketMessage(uniqueName, MSG_TYPE_LEAVE, Objects.toString(channel.id()), null, null, null, key));
+      });
     }
     System.out.println("[ws] Session has been closed: " + session.getId() + "with status: " + status);
   }
